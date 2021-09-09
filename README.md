@@ -9,8 +9,6 @@ Repository consists of following sub-projects.
 Core TrueFi smart contracts. These contracts are responsible for establishing main protocol functionalities like creating loans, rating loans, rewarding raters etc. This repository also contains contracts used for TRU liquidity mining program.
 ## True Currencies
 Contracts used for True Currencies - a set of fully-backed stablecoins. True Currencies feature tokens pegged to USD, AUD, HKD, GBP and CAD.
-## Governance
-Contracts implementing TrueFi governance. Sub-project features both governor contract and all contracts implementing voting mechanisms.
 ## Proxy
 Contracts and utilities allowing to use unified proxy structure across whole TrueFi ecosystem.
 ## Trust Token
