@@ -1,0 +1,104 @@
+version: 2.1
+
+commands:
+  pull_submodules:
+    steps:
+      - run:
+          name: Pull submodules
+          command: git submodule init && git submodule update
+  install_dependencies:
+    steps:
+      - restore_cache:
+          name: Restore modules cache
+          keys:
+            - node_modules-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn install --frozen-lockfile
+      - save_cache:
+          name: Save modules cache
+          key: node_modules-{{ checksum "yarn.lock" }}
+          paths:
+            - ./node_modules
+
+jobs:
+  build:
+    docker:
+      - image: circleci/node:12.19.0
+    steps:
+      - checkout
+      - setup_remote_docker
+      - pull_submodules
+      - install_dependencies
+      - run: yarn build
+      - run: yarn typecheck
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+  lint:
+    docker:
+      - image: circleci/node:12.19.0
+    steps:
+      - attach_workspace:
+          at: .
+      - run: yarn lint
+  test-others:
+    docker:
+      - image: circleci/node:12.19.0
+    steps:
+      - attach_workspace:
+          at: .
+      - run: yarn test:governance && yarn test:proxy && yarn test:registry && yarn test:scripts && yarn test:true-currencies && yarn test:true-gold && yarn test:trusttoken
+  test-truefi:
+    docker:
+      - image: circleci/node:12.19.0
+    steps:
+      - attach_workspace:
+          at: .
+      - run: yarn test:truefi
+  test-truefi2:
+    docker:
+      - image: circleci/node:12.19.0
+    steps:
+      - attach_workspace:
+          at: .
+      - run: yarn test:truefi2
+  deploy:
+    docker:
+      - image: circleci/node:12.19.0
+    steps:
+      - attach_workspace:
+          at: .
+      - run: yarn deploy:truefi --network kovan --dry-run && yarn deploy:truefi2 --network kovan --dry-run
+  integration:
+    docker:
+      - image: circleci/node:12.19.0
+    steps:
+      - attach_workspace:
+          at: .
+      - run: yarn test:integration
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - build
+      - lint:
+          requires:
+            - build
+      - test-truefi:
+          requires:
+            - build
+      - test-truefi2:
+          requires:
+            - build
+      - test-others:
+          requires:
+            - build
+      - deploy:
+          requires:
+            - build
+      - integration:
+          requires:
+            - build
